@@ -17,6 +17,10 @@ class MealTableViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        // Use the edit button item provided by the table view controller.
+        //// ナビゲーションバーの左側にEditボタンを追加
+        navigationItem.leftBarButtonItem = editButtonItem()
+        
         // Load the sample data.
         loadSampleMeals()
     }
@@ -64,25 +68,24 @@ class MealTableViewController: UITableViewController {
         return cell
     }
 
-    /*
     // Override to support conditional editing of the table view.
     override func tableView(tableView: UITableView, canEditRowAtIndexPath indexPath: NSIndexPath) -> Bool {
         // Return false if you do not want the specified item to be editable.
         return true
     }
-    */
 
-    /*
     // Override to support editing the table view.
+    //// 編集モードのテーブルの設定
     override func tableView(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath) {
         if editingStyle == .Delete {
+            ////// 選択したindexPathのmealをmealsから削除
+            meals.removeAtIndex(indexPath.row)
             // Delete the row from the data source
             tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: .Fade)
         } else if editingStyle == .Insert {
             // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
         }    
     }
-    */
 
     /*
     // Override to support rearranging the table view.
@@ -99,22 +102,51 @@ class MealTableViewController: UITableViewController {
     }
     */
 
-    /*
+
     // MARK: - Navigation
 
     // In a storyboard-based application, you will often want to do a little preparation before navigation
+    //// 画面遷移が始まった時に呼ばれる
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
+        //// segueを識別して処理を分ける
+        if segue.identifier == "ShowDetail" {
+            //// segueの行き先をMealViewControllerとして取得
+            let mealDetailViewController = segue.destinationViewController as! MealViewController
+            
+            // Get the cell that generated this segue.
+            //// このsegueで生成されるセルを取得
+            //// senderをMealTableViewCellにダウンキャスト
+            if let selectedMealCell = sender as? MealTableViewCell {
+                //// 選択されたセルをもとにindexPathを取得
+                let indexPath = tableView.indexPathForCell(selectedMealCell)!
+                //// indexPathからmealオブジェクトを取得
+                let selectedMeal = meals[indexPath.row]
+                //// segueの行き先であるmealDetailViewControllerのmealプロパティに選択したmealオブジェクトを配置
+                mealDetailViewController.meal = selectedMeal
+            }
+        }
+        else if segue.identifier == "AddItem" {
+            print("Adding new meal.")
+        }
     }
-    */
 
+    //// MealViewControllerからsaveボタンが押されたら
     @IBAction func unwindToMealList(sender: UIStoryboardSegue) {
         if let sourceViewController = sender.sourceViewController as? MealViewController, meal = sourceViewController.meal {
-            // Add a new meal.
-            let newIndexPath = NSIndexPath(forRow: meals.count, inSection: 0)
-            meals.append(meal)
-            tableView.insertRowsAtIndexPaths([newIndexPath], withRowAnimation: .Bottom)
+            //// 選択したセルのインデックスを返す→既存のMealの編集。選択されていなければelse→新規追加。
+            if let selectedIndexPath = tableView.indexPathForSelectedRow {
+                // Update an existing meal.
+                //// 選択したMealを更新
+                meals[selectedIndexPath.row] = meal
+                tableView.reloadRowsAtIndexPaths([selectedIndexPath], withRowAnimation: .None)
+            }
+            else {
+                // Add a new meal.
+                //// 新規登録
+                let newIndexPath = NSIndexPath(forRow: meals.count, inSection: 0)
+                meals.append(meal)
+                tableView.insertRowsAtIndexPaths([newIndexPath], withRowAnimation: .Bottom)
+            }
         }
     }
     
